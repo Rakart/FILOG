@@ -2,8 +2,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
-import { Download, Plus, Filter } from "lucide-react";
+import { Download, Plus, Filter, Upload } from "lucide-react";
 import { formatDate } from "./utils/dateUtils";
+import { ImportCsvDialog } from "./ImportCsvDialog";
 
 // Mock transaction data with cost basis info
 const transactions = [
@@ -111,6 +112,14 @@ export function TransactionsView() {
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
+          <ImportCsvDialog
+            trigger={
+              <Button variant="outline" size="sm" className="rounded-sm">
+                <Upload className="h-4 w-4 mr-2" />
+                Import CSV
+              </Button>
+            }
+          />
           <Button size="sm" className="rounded-sm">
             <Plus className="h-4 w-4 mr-2" />
             Add Transaction
