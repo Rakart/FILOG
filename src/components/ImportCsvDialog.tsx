@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, isValidElement, cloneElement } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -68,7 +68,6 @@ export function ImportCsvDialog({ trigger }: ImportCsvDialogProps) {
   };
 
   const startOpen = async () => {
-    setOpen(true);
     setStage("select");
     setFile(null);
     setHeaders([]);
@@ -79,6 +78,7 @@ export function ImportCsvDialog({ trigger }: ImportCsvDialogProps) {
     setMapAmount("");
     setMapExternal("");
     await loadAccounts();
+    setOpen(true);
   };
 
   const handleCommit = async () => {
@@ -98,7 +98,9 @@ export function ImportCsvDialog({ trigger }: ImportCsvDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <div onClick={startOpen}>{trigger}</div>
+        <span onClick={() => { void startOpen(); }}>
+          {isValidElement(trigger) ? trigger : <span>{trigger}</span>}
+        </span>
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
