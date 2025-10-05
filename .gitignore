@@ -1,0 +1,13 @@
+# Git internal directory - should always be ignored
+.git/
+
+# Node dependencies
+node_modules/
+
+# Other common Node-related files to ignore
+/dist
+/build
+/temp
+npm-debug.log*
+yarn-debug.log*
+.env
