@@ -1,74 +1,33 @@
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
-import { Download, Plus, Filter, Upload } from "lucide-react";
+import { Download, Plus, Filter, Upload, Trash2 } from "lucide-react";
 import { formatDate } from "./utils/dateUtils";
 import { ImportCsvDialog } from "./ImportCsvDialog";
+import { AddTransactionDialog } from "./AddTransactionDialog";
+import { listTransactions, deleteTransaction, type Transaction } from "../services/transactionsService";
 
-// Mock transaction data with cost basis info
-const transactions = [
-  { 
-    id: 1, 
-    date: '2024-10-01', 
-    description: 'AAPL Stock Purchase', 
-    category: 'Investment', 
-    amount: -1500, 
-    costBasis: 150.00,
-    shares: 10,
-    symbol: 'AAPL'
-  },
-  { 
-    id: 2, 
-    date: '2024-09-30', 
-    description: 'Salary Deposit', 
-    category: 'Income', 
-    amount: 5200, 
-    costBasis: null,
-    shares: null,
-    symbol: null
-  },
-  { 
-    id: 3, 
-    date: '2024-09-29', 
-    description: 'TSLA Stock Purchase', 
-    category: 'Investment', 
-    amount: -2400, 
-    costBasis: 240.00,
-    shares: 10,
-    symbol: 'TSLA'
-  },
-  { 
-    id: 4, 
-    date: '2024-09-28', 
-    description: 'Rent Payment', 
-    category: 'Housing', 
-    amount: -2100, 
-    costBasis: null,
-    shares: null,
-    symbol: null
-  },
-  { 
-    id: 5, 
-    date: '2024-09-27', 
-    description: 'Bitcoin Purchase', 
-    category: 'Crypto', 
-    amount: -800, 
-    costBasis: 26500.00,
-    shares: 0.0302,
-    symbol: 'BTC'
-  },
-  { 
-    id: 6, 
-    date: '2024-09-26', 
-    description: 'Dividend - MSFT', 
-    category: 'Income', 
-    amount: 85, 
-    costBasis: null,
-    shares: null,
-    symbol: 'MSFT'
-  },
-];
+export function TransactionsView() {
+  const [rows, setRows] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const refresh = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await listTransactions();
+      setRows(data);
+    } catch (e: any) {
+      setError(e.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { void refresh(); }, []);
 
 // Mock holdings with cost basis
 const holdings = [
@@ -78,7 +37,6 @@ const holdings = [
   { symbol: 'BTC', shares: 0.1524, avgCostBasis: 26200.00, currentPrice: 28500.00, totalValue: 4343.40 },
 ];
 
-export function TransactionsView() {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -120,10 +78,15 @@ export function TransactionsView() {
               </Button>
             }
           />
-          <Button size="sm" className="rounded-sm">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Transaction
-          </Button>
+          <AddTransactionDialog
+            onCreated={refresh}
+            trigger={
+              <Button size="sm" className="rounded-sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Transaction
+              </Button>
+            }
+          />
         </div>
       </div>
 
@@ -190,31 +153,28 @@ export function TransactionsView() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {transactions.map((transaction) => (
-                <TableRow key={transaction.id}>
-                  <TableCell>{formatDate(transaction.date)}</TableCell>
-                  <TableCell className="font-medium">
-                    {transaction.description}
-                    {transaction.symbol && (
-                      <div className="text-xs text-muted-foreground">{transaction.symbol}</div>
-                    )}
+              {rows.map((tx) => (
+                <TableRow key={tx.id}>
+                  <TableCell>{formatDate(tx.posted_at)}</TableCell>
+                  <TableCell className="font-medium">{tx.description}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="rounded-sm">{tx.category_id ? 'Categorized' : 'Uncategorized'}</Badge>
+                  </TableCell>
+                  <TableCell className={tx.amount >= 0 ? 'text-green-400' : 'text-red-400'}>
+                    {tx.amount >= 0 ? '+' : ''}{formatCurrency(tx.amount)}
                   </TableCell>
                   <TableCell>
-                    <Badge variant="secondary" className={`${getCategoryColor(transaction.category)} text-white rounded-sm`}>
-                      {transaction.category}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className={transaction.amount >= 0 ? 'text-green-400' : 'text-red-400'}>
-                    {transaction.amount >= 0 ? '+' : ''}{formatCurrency(transaction.amount)}
-                  </TableCell>
-                  <TableCell>
-                    {transaction.costBasis ? formatCurrency(transaction.costBasis) : '-'}
-                  </TableCell>
-                  <TableCell>
-                    {transaction.shares ? transaction.shares.toString() : '-'}
+                    <Button variant="outline" size="sm" className="rounded-sm" onClick={async () => { await deleteTransaction(tx.id); await refresh(); }}>
+                      <Trash2 className="h-4 w-4 mr-1" /> Delete
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
+              {!rows.length && (
+                <TableRow>
+                  <TableCell colSpan={5}>{loading ? 'Loading…' : (error ? error : 'No transactions yet.')}</TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>

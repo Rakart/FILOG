@@ -43,9 +43,13 @@ export async function commitTransactions(importJobId: string, rows: ParsedTransa
 }
 
 export async function listAccounts() {
+  const { data: userData } = await supabase.auth.getUser();
+  const userId = userData.user?.id;
+  if (!userId) throw new Error("Not authenticated");
   const { data, error } = await supabase
     .from("accounts")
     .select("id,name,type,currency")
+    .eq("user_id", userId)
     .order("created_at", { ascending: true });
   if (error) throw error;
   return data ?? [];

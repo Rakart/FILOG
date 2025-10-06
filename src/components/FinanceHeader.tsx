@@ -1,5 +1,7 @@
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingUp, TrendingDown, LogOut } from "lucide-react";
 import { Card } from "./ui/card";
+import { Button } from "./ui/button";
+import { supabase } from "../lib/supabaseClient";
 
 interface FinanceHeaderProps {
   totalNetWorth: number;
@@ -26,13 +28,27 @@ export function FinanceHeader({ totalNetWorth, dailyChange, dailyChangePercent }
             <p className="text-sm text-muted-foreground mb-1">Total Net Worth</p>
             <h1 className="text-3xl">{formatCurrency(totalNetWorth)}</h1>
           </div>
-          <div className="text-right">
-            <p className="text-sm text-muted-foreground mb-1">24h Change</p>
-            <div className={`flex items-center gap-2 text-2xl ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
-              {isPositive ? <TrendingUp className="h-6 w-6" /> : <TrendingDown className="h-6 w-6" />}
-              <span>{formatCurrency(Math.abs(dailyChange))}</span>
-              <span className="text-lg">({Math.abs(dailyChangePercent).toFixed(2)}%)</span>
+          <div className="flex items-center gap-6">
+            <div className="text-right">
+              <p className="text-sm text-muted-foreground mb-1">24h Change</p>
+              <div className={`flex items-center gap-2 text-2xl ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
+                {isPositive ? <TrendingUp className="h-6 w-6" /> : <TrendingDown className="h-6 w-6" />}
+                <span>{formatCurrency(Math.abs(dailyChange))}</span>
+                <span className="text-lg">({Math.abs(dailyChangePercent).toFixed(2)}%)</span>
+              </div>
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-sm"
+              onClick={async () => {
+                await supabase.auth.signOut();
+                window.location.href = "/";
+              }}
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </Button>
           </div>
         </div>
       </Card>

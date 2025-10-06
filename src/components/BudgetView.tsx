@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Progress } from "./ui/progress";
 import { Badge } from "./ui/badge";
@@ -15,43 +16,15 @@ const budgetCategories = [
   { category: 'Education', spent: 150, budget: 300, icon: GraduationCap, color: 'bg-indigo-500' },
 ];
 
-// Mock financial goals
-const financialGoals = [
-  { 
-    name: 'Emergency Fund', 
-    target: 15000, 
-    current: 8500, 
-    deadline: '2024-12-31',
-    priority: 'High',
-    color: 'bg-red-500'
-  },
-  { 
-    name: 'Vacation to Europe', 
-    target: 5000, 
-    current: 2800, 
-    deadline: '2025-06-01',
-    priority: 'Medium',
-    color: 'bg-blue-500'
-  },
-  { 
-    name: 'Down Payment', 
-    target: 50000, 
-    current: 12000, 
-    deadline: '2026-01-01',
-    priority: 'High',
-    color: 'bg-green-500'
-  },
-  { 
-    name: 'New Car', 
-    target: 25000, 
-    current: 18500, 
-    deadline: '2025-03-01',
-    priority: 'Low',
-    color: 'bg-yellow-500'
-  },
-];
+type Goal = { name: string; target: number; current: number; deadline: string; priority: 'High' | 'Medium' | 'Low'; color: string };
 
 export function BudgetView() {
+  const [financialGoals, setFinancialGoals] = useState<Goal[]>([
+    { name: 'Emergency Fund', target: 15000, current: 8500, deadline: '2024-12-31', priority: 'High', color: 'bg-red-500' },
+    { name: 'Vacation to Europe', target: 5000, current: 2800, deadline: '2025-06-01', priority: 'Medium', color: 'bg-blue-500' },
+    { name: 'Down Payment', target: 50000, current: 12000, deadline: '2026-01-01', priority: 'High', color: 'bg-green-500' },
+    { name: 'New Car', target: 25000, current: 18500, deadline: '2025-03-01', priority: 'Low', color: 'bg-yellow-500' },
+  ]);
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -224,6 +197,9 @@ export function BudgetView() {
                         Save {formatCurrency(remaining / daysUntilDeadline)} per day to reach goal
                       </p>
                     )}
+                    <div className="mt-3 flex justify-end">
+                      <Button variant="outline" size="sm" className="rounded-sm" onClick={() => setFinancialGoals(prev => prev.filter((_, i) => i !== index))}>Delete Goal</Button>
+                    </div>
                   </div>
                 </div>
               );

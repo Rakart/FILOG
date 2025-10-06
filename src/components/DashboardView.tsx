@@ -1,7 +1,9 @@
+import { useEffect, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { ArrowUpRight, ArrowDownRight, CreditCard, Banknote, Building2 } from "lucide-react";
 import { formatDate, formatChartDate } from "./utils/dateUtils";
+import { listTransactions, type Transaction } from "../services/transactionsService";
 
 // Mock data for portfolio performance
 const portfolioData = [
@@ -26,17 +28,15 @@ const assetAllocation = [
   { name: 'Bonds', value: 15000, color: '#ef4444' },
 ];
 
-// Mock recent transactions
-const recentTransactions = [
-  { id: 1, type: 'income', description: 'Salary Deposit', amount: 5200, date: '2024-10-01', icon: Banknote },
-  { id: 2, type: 'expense', description: 'Rent Payment', amount: -2100, date: '2024-10-01', icon: Building2 },
-  { id: 3, type: 'investment', description: 'AAPL Stock Purchase', amount: -1500, date: '2024-09-30', icon: ArrowUpRight },
-  { id: 4, type: 'income', description: 'Dividend Payment', amount: 125, date: '2024-09-29', icon: ArrowUpRight },
-  { id: 5, type: 'expense', description: 'Credit Card Payment', amount: -450, date: '2024-09-28', icon: CreditCard },
-  { id: 6, type: 'investment', description: 'Bitcoin Purchase', amount: -800, date: '2024-09-27', icon: ArrowUpRight },
-];
-
 export function DashboardView() {
+  const [recent, setRecent] = useState<Transaction[]>([]);
+  useEffect(() => { (async () => {
+    try {
+      const data = await listTransactions();
+      setRecent(data.slice(0, 6));
+    } catch {}
+  })(); }, []);
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
