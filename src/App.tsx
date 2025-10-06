@@ -11,6 +11,7 @@ import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './components/ui/select';
 import { listCategories, createCategory, deleteCategory } from './services/categoriesService';
+import { listAccounts, createAccount, deleteAccount } from './services/accountsService';
 
 // Mock data for header
 const mockHeaderData = {
@@ -33,12 +34,15 @@ function ReportsView() {
 
 function SettingsView() {
   const [categories, setCategories] = useState<any[]>([]);
+  const [accounts, setAccounts] = useState<any[]>([]);
   const [newName, setNewName] = useState("");
   const [newKind, setNewKind] = useState<"income" | "expense" | "">("");
+  const [newAccountName, setNewAccountName] = useState("");
+  const [newAccountType, setNewAccountType] = useState<"cash" | "checking" | "credit_card" | "loan" | "brokerage" | "">("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = async () => {
+  const refreshCategories = async () => {
     try {
       setError(null);
       const data = await listCategories();
@@ -48,16 +52,29 @@ function SettingsView() {
     }
   };
 
-  useEffect(() => { void refresh(); }, []);
+  const refreshAccounts = async () => {
+    try {
+      setError(null);
+      const data = await listAccounts();
+      setAccounts(data);
+    } catch (e: any) {
+      setError(e.message || String(e));
+    }
+  };
 
-  const onAdd = async () => {
+  useEffect(() => { 
+    void refreshCategories(); 
+    void refreshAccounts();
+  }, []);
+
+  const onAddCategory = async () => {
     if (!newName || !newKind) return;
     setLoading(true);
     try {
       await createCategory({ name: newName, kind: newKind });
       setNewName("");
       setNewKind("");
-      await refresh();
+      await refreshCategories();
     } catch (e: any) {
       setError(e.message || String(e));
     } finally {
@@ -65,11 +82,38 @@ function SettingsView() {
     }
   };
 
-  const onDelete = async (id: string) => {
+  const onDeleteCategory = async (id: string) => {
     setLoading(true);
     try {
       await deleteCategory(id);
-      await refresh();
+      await refreshCategories();
+    } catch (e: any) {
+      setError(e.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onAddAccount = async () => {
+    if (!newAccountName || !newAccountType) return;
+    setLoading(true);
+    try {
+      await createAccount({ name: newAccountName, type: newAccountType });
+      setNewAccountName("");
+      setNewAccountType("");
+      await refreshAccounts();
+    } catch (e: any) {
+      setError(e.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onDeleteAccount = async (id: string) => {
+    setLoading(true);
+    try {
+      await deleteAccount(id);
+      await refreshAccounts();
     } catch (e: any) {
       setError(e.message || String(e));
     } finally {
@@ -91,17 +135,47 @@ function SettingsView() {
               <SelectItem value="expense">Expense</SelectItem>
             </SelectContent>
           </Select>
-          <Button onClick={onAdd} disabled={loading || !newName || !newKind}>Add</Button>
+          <Button onClick={onAddCategory} disabled={loading || !newName || !newKind}>Add</Button>
         </div>
         <div className="border-t border-border pt-4 space-y-2">
           {categories.map((c) => (
             <div key={c.id} className="flex items-center justify-between">
               <div className="text-sm">{c.name} <span className="text-muted-foreground">({c.kind})</span></div>
-              <Button variant="outline" size="sm" className="rounded-sm" onClick={() => onDelete(c.id)}>Delete</Button>
+              <Button variant="outline" size="sm" className="rounded-sm" onClick={() => onDeleteCategory(c.id)}>Delete</Button>
             </div>
           ))}
           {!categories.length && (
             <div className="text-sm text-muted-foreground">No categories yet.</div>
+          )}
+        </div>
+      </Card>
+
+      <Card className="p-6 rounded-sm w-full space-y-4">
+        <h2 className="text-xl">Accounts</h2>
+        {error && <div className="text-sm text-red-500">{error}</div>}
+        <div className="flex gap-2 items-center">
+          <Input placeholder="Account name" value={newAccountName} onChange={(e) => setNewAccountName(e.target.value)} />
+          <Select value={newAccountType} onValueChange={(v: any) => setNewAccountType(v)}>
+            <SelectTrigger className="w-40"><SelectValue placeholder="Type" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="cash">Cash</SelectItem>
+              <SelectItem value="checking">Checking</SelectItem>
+              <SelectItem value="credit_card">Credit Card</SelectItem>
+              <SelectItem value="loan">Loan</SelectItem>
+              <SelectItem value="brokerage">Brokerage</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button onClick={onAddAccount} disabled={loading || !newAccountName || !newAccountType}>Add</Button>
+        </div>
+        <div className="border-t border-border pt-4 space-y-2">
+          {accounts.map((a) => (
+            <div key={a.id} className="flex items-center justify-between">
+              <div className="text-sm">{a.name} <span className="text-muted-foreground">({a.type})</span></div>
+              <Button variant="outline" size="sm" className="rounded-sm" onClick={() => onDeleteAccount(a.id)}>Delete</Button>
+            </div>
+          ))}
+          {!accounts.length && (
+            <div className="text-sm text-muted-foreground">No accounts yet. Create one to use Import CSV and Add Transaction.</div>
           )}
         </div>
       </Card>

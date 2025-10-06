@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
@@ -66,18 +66,23 @@ export function AddTransactionDialog({ trigger, onCreated }: AddTransactionDialo
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <span onClick={() => setOpen(true)}>{trigger}</span>
+        {trigger}
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Add Transaction</DialogTitle>
+          <DialogDescription>
+            Create a new transaction by filling in the details below.
+          </DialogDescription>
         </DialogHeader>
         {error && <div className="text-sm text-red-500">{error}</div>}
         <div className="space-y-3">
           <div>
-            <label className="text-sm">Account</label>
+            <label htmlFor="add-transaction-account" className="text-sm">Account</label>
             <Select value={accountId} onValueChange={setAccountId}>
-              <SelectTrigger className="w-full"><SelectValue placeholder="Select account" /></SelectTrigger>
+              <SelectTrigger id="add-transaction-account" className="w-full">
+                <SelectValue placeholder="Select account" />
+              </SelectTrigger>
               <SelectContent>
                 {accounts.map(a => (
                   <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
@@ -86,16 +91,36 @@ export function AddTransactionDialog({ trigger, onCreated }: AddTransactionDialo
             </Select>
           </div>
           <div>
-            <label className="text-sm">Date</label>
-            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+            <label htmlFor="add-transaction-date" className="text-sm">Date</label>
+            <Input 
+              id="add-transaction-date"
+              name="date"
+              type="date" 
+              value={date} 
+              onChange={(e) => setDate(e.target.value)} 
+            />
           </div>
           <div>
-            <label className="text-sm">Description</label>
-            <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description" />
+            <label htmlFor="add-transaction-description" className="text-sm">Description</label>
+            <Input 
+              id="add-transaction-description"
+              name="description"
+              value={description} 
+              onChange={(e) => setDescription(e.target.value)} 
+              placeholder="Description" 
+            />
           </div>
           <div>
-            <label className="text-sm">Amount</label>
-            <Input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="e.g. -25.50" />
+            <label htmlFor="add-transaction-amount" className="text-sm">Amount</label>
+            <Input 
+              id="add-transaction-amount"
+              name="amount"
+              type="number" 
+              step="0.01" 
+              value={amount} 
+              onChange={(e) => setAmount(e.target.value)} 
+              placeholder="e.g. -25.50" 
+            />
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
@@ -106,5 +131,3 @@ export function AddTransactionDialog({ trigger, onCreated }: AddTransactionDialo
     </Dialog>
   );
 }
-
-

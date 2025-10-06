@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 
@@ -39,35 +39,70 @@ export function TransactionsFilterDialog({ trigger, initial, onApply }: Transact
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <span onClick={() => setOpen(true)}>{trigger}</span>
+        {trigger}
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Filter Transactions</DialogTitle>
+          <DialogDescription>
+            Filter your transactions by search terms, date range, and amount.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           <div>
-            <label className="text-sm">Search</label>
-            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="description contains..." />
+            <label htmlFor="filter-search" className="text-sm">Search</label>
+            <Input 
+              id="filter-search"
+              name="search"
+              value={q} 
+              onChange={(e) => setQ(e.target.value)} 
+              placeholder="description contains..." 
+            />
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="text-sm">Start date</label>
-              <Input type="date" value={start} onChange={(e) => setStart(e.target.value)} />
+              <label htmlFor="filter-start-date" className="text-sm">Start date</label>
+              <Input 
+                id="filter-start-date"
+                name="startDate"
+                type="date" 
+                value={start} 
+                onChange={(e) => setStart(e.target.value)} 
+              />
             </div>
             <div>
-              <label className="text-sm">End date</label>
-              <Input type="date" value={end} onChange={(e) => setEnd(e.target.value)} />
+              <label htmlFor="filter-end-date" className="text-sm">End date</label>
+              <Input 
+                id="filter-end-date"
+                name="endDate"
+                type="date" 
+                value={end} 
+                onChange={(e) => setEnd(e.target.value)} 
+              />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="text-sm">Min amount</label>
-              <Input type="number" step="0.01" value={minAmount} onChange={(e) => setMinAmount(e.target.value)} />
+              <label htmlFor="filter-min-amount" className="text-sm">Min amount</label>
+              <Input 
+                id="filter-min-amount"
+                name="minAmount"
+                type="number" 
+                step="0.01" 
+                value={minAmount} 
+                onChange={(e) => setMinAmount(e.target.value)} 
+              />
             </div>
             <div>
-              <label className="text-sm">Max amount</label>
-              <Input type="number" step="0.01" value={maxAmount} onChange={(e) => setMaxAmount(e.target.value)} />
+              <label htmlFor="filter-max-amount" className="text-sm">Max amount</label>
+              <Input 
+                id="filter-max-amount"
+                name="maxAmount"
+                type="number" 
+                step="0.01" 
+                value={maxAmount} 
+                onChange={(e) => setMaxAmount(e.target.value)} 
+              />
             </div>
           </div>
           <div className="flex justify-end gap-2 pt-2">
@@ -79,5 +114,3 @@ export function TransactionsFilterDialog({ trigger, initial, onApply }: Transact
     </Dialog>
   );
 }
-
-
