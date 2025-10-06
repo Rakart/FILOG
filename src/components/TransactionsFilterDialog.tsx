@@ -41,49 +41,52 @@ export function TransactionsFilterDialog({ trigger, initial, onApply }: Transact
       <DialogTrigger asChild>
         {trigger}
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md bg-white border shadow-lg">
         <DialogHeader>
           <DialogTitle>Filter Transactions</DialogTitle>
           <DialogDescription>
             Filter your transactions by search terms, date range, and amount.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-3">
+        <div className="space-y-3 p-4">
           <div>
-            <label htmlFor="filter-search" className="text-sm">Search</label>
+            <label htmlFor="filter-search" className="text-sm font-medium">Search</label>
             <Input 
               id="filter-search"
               name="search"
               value={q} 
               onChange={(e) => setQ(e.target.value)} 
               placeholder="description contains..." 
+              className="mt-1"
             />
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label htmlFor="filter-start-date" className="text-sm">Start date</label>
+              <label htmlFor="filter-start-date" className="text-sm font-medium">Start date</label>
               <Input 
                 id="filter-start-date"
                 name="startDate"
                 type="date" 
                 value={start} 
                 onChange={(e) => setStart(e.target.value)} 
+                className="mt-1"
               />
             </div>
             <div>
-              <label htmlFor="filter-end-date" className="text-sm">End date</label>
+              <label htmlFor="filter-end-date" className="text-sm font-medium">End date</label>
               <Input 
                 id="filter-end-date"
                 name="endDate"
                 type="date" 
                 value={end} 
                 onChange={(e) => setEnd(e.target.value)} 
+                className="mt-1"
               />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label htmlFor="filter-min-amount" className="text-sm">Min amount</label>
+              <label htmlFor="filter-min-amount" className="text-sm font-medium">Min amount</label>
               <Input 
                 id="filter-min-amount"
                 name="minAmount"
@@ -91,10 +94,11 @@ export function TransactionsFilterDialog({ trigger, initial, onApply }: Transact
                 step="0.01" 
                 value={minAmount} 
                 onChange={(e) => setMinAmount(e.target.value)} 
+                className="mt-1"
               />
             </div>
             <div>
-              <label htmlFor="filter-max-amount" className="text-sm">Max amount</label>
+              <label htmlFor="filter-max-amount" className="text-sm font-medium">Max amount</label>
               <Input 
                 id="filter-max-amount"
                 name="maxAmount"
@@ -102,10 +106,11 @@ export function TransactionsFilterDialog({ trigger, initial, onApply }: Transact
                 step="0.01" 
                 value={maxAmount} 
                 onChange={(e) => setMaxAmount(e.target.value)} 
+                className="mt-1"
               />
             </div>
           </div>
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex justify-end gap-2 pt-4">
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
             <Button onClick={apply}>Apply</Button>
           </div>
