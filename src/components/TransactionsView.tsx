@@ -30,7 +30,7 @@ export function TransactionsView() {
     }
   };
 
-  useEffect(() => { void refresh(); }, []);
+  useEffect(() => { void refresh(); }, [filters]);
 
 // Mock holdings with cost basis
 const holdings = [
@@ -192,7 +192,7 @@ const holdings = [
               ))}
               {!rows.length && (
                 <TableRow>
-                  <TableCell colSpan={5}>{loading ? 'Loading…' : (error ? error : 'No transactions yet.')}</TableCell>
+                  <TableCell colSpan={6}>{loading ? 'Loading…' : (error ? error : 'No transactions yet.')}</TableCell>
                 </TableRow>
               )}
             </TableBody>
