@@ -68,19 +68,19 @@ export function AddTransactionDialog({ trigger, onCreated }: AddTransactionDialo
       <DialogTrigger asChild>
         {trigger}
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md bg-white border shadow-lg">
         <DialogHeader>
           <DialogTitle>Add Transaction</DialogTitle>
           <DialogDescription>
             Create a new transaction by filling in the details below.
           </DialogDescription>
         </DialogHeader>
-        {error && <div className="text-sm text-red-500">{error}</div>}
-        <div className="space-y-3">
+        {error && <div className="text-sm text-red-500 p-4">{error}</div>}
+        <div className="space-y-3 p-4">
           <div>
-            <label htmlFor="add-transaction-account" className="text-sm">Account</label>
+            <label htmlFor="add-transaction-account" className="text-sm font-medium">Account</label>
             <Select value={accountId} onValueChange={setAccountId}>
-              <SelectTrigger id="add-transaction-account" className="w-full">
+              <SelectTrigger id="add-transaction-account" className="w-full mt-1">
                 <SelectValue placeholder="Select account" />
               </SelectTrigger>
               <SelectContent>
@@ -91,27 +91,29 @@ export function AddTransactionDialog({ trigger, onCreated }: AddTransactionDialo
             </Select>
           </div>
           <div>
-            <label htmlFor="add-transaction-date" className="text-sm">Date</label>
+            <label htmlFor="add-transaction-date" className="text-sm font-medium">Date</label>
             <Input 
               id="add-transaction-date"
               name="date"
               type="date" 
               value={date} 
               onChange={(e) => setDate(e.target.value)} 
+              className="mt-1"
             />
           </div>
           <div>
-            <label htmlFor="add-transaction-description" className="text-sm">Description</label>
+            <label htmlFor="add-transaction-description" className="text-sm font-medium">Description</label>
             <Input 
               id="add-transaction-description"
               name="description"
               value={description} 
               onChange={(e) => setDescription(e.target.value)} 
               placeholder="Description" 
+              className="mt-1"
             />
           </div>
           <div>
-            <label htmlFor="add-transaction-amount" className="text-sm">Amount</label>
+            <label htmlFor="add-transaction-amount" className="text-sm font-medium">Amount</label>
             <Input 
               id="add-transaction-amount"
               name="amount"
@@ -120,9 +122,10 @@ export function AddTransactionDialog({ trigger, onCreated }: AddTransactionDialo
               value={amount} 
               onChange={(e) => setAmount(e.target.value)} 
               placeholder="e.g. -25.50" 
+              className="mt-1"
             />
           </div>
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex justify-end gap-2 pt-4">
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
             <Button onClick={handleCreate} disabled={loading || !accountId || !date || !description || !amount}>{loading ? 'Saving…' : 'Save'}</Button>
           </div>

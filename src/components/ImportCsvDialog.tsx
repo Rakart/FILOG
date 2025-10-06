@@ -104,7 +104,7 @@ export function ImportCsvDialog({ trigger, onComplete }: ImportCsvDialogProps) {
           {trigger}
         </div>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl bg-white border shadow-lg">
         <DialogHeader>
           <DialogTitle>Import CSV</DialogTitle>
           <DialogDescription>
@@ -112,14 +112,14 @@ export function ImportCsvDialog({ trigger, onComplete }: ImportCsvDialogProps) {
           </DialogDescription>
         </DialogHeader>
 
-        {error && <div className="text-red-500 text-sm">{error}</div>}
+        {error && <div className="text-red-500 text-sm p-4">{error}</div>}
 
         {stage === "select" && (
-          <div className="space-y-4">
+          <div className="space-y-4 p-4">
             <div>
-              <label htmlFor="import-account" className="text-sm">Account</label>
+              <label htmlFor="import-account" className="text-sm font-medium">Account</label>
               <Select value={accountId} onValueChange={setAccountId}>
-                <SelectTrigger id="import-account" className="w-full">
+                <SelectTrigger id="import-account" className="w-full mt-1">
                   <SelectValue placeholder="Select account" />
                 </SelectTrigger>
                 <SelectContent>
@@ -130,25 +130,26 @@ export function ImportCsvDialog({ trigger, onComplete }: ImportCsvDialogProps) {
               </Select>
             </div>
             <div>
-              <label htmlFor="import-file" className="text-sm">CSV File</label>
+              <label htmlFor="import-file" className="text-sm font-medium">CSV File</label>
               <Input 
                 id="import-file"
                 name="csvFile"
                 type="file" 
                 accept=".csv,text/csv" 
                 onChange={onFileChange} 
+                className="mt-1"
               />
             </div>
           </div>
         )}
 
         {stage === "map" && (
-          <div className="space-y-4">
+          <div className="space-y-4 p-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="map-date" className="text-sm">Date column</label>
+                <label htmlFor="map-date" className="text-sm font-medium">Date column</label>
                 <Select value={mapDate} onValueChange={setMapDate}>
-                  <SelectTrigger id="map-date" className="w-full">
+                  <SelectTrigger id="map-date" className="w-full mt-1">
                     <SelectValue placeholder="Select column" />
                   </SelectTrigger>
                   <SelectContent>
@@ -157,9 +158,9 @@ export function ImportCsvDialog({ trigger, onComplete }: ImportCsvDialogProps) {
                 </Select>
               </div>
               <div>
-                <label htmlFor="map-desc" className="text-sm">Description column</label>
+                <label htmlFor="map-desc" className="text-sm font-medium">Description column</label>
                 <Select value={mapDesc} onValueChange={setMapDesc}>
-                  <SelectTrigger id="map-desc" className="w-full">
+                  <SelectTrigger id="map-desc" className="w-full mt-1">
                     <SelectValue placeholder="Select column" />
                   </SelectTrigger>
                   <SelectContent>
@@ -168,9 +169,9 @@ export function ImportCsvDialog({ trigger, onComplete }: ImportCsvDialogProps) {
                 </Select>
               </div>
               <div>
-                <label htmlFor="map-amount" className="text-sm">Amount column</label>
+                <label htmlFor="map-amount" className="text-sm font-medium">Amount column</label>
                 <Select value={mapAmount} onValueChange={setMapAmount}>
-                  <SelectTrigger id="map-amount" className="w-full">
+                  <SelectTrigger id="map-amount" className="w-full mt-1">
                     <SelectValue placeholder="Select column" />
                   </SelectTrigger>
                   <SelectContent>
@@ -179,9 +180,9 @@ export function ImportCsvDialog({ trigger, onComplete }: ImportCsvDialogProps) {
                 </Select>
               </div>
               <div>
-                <label htmlFor="map-external" className="text-sm">External ID column (optional)</label>
+                <label htmlFor="map-external" className="text-sm font-medium">External ID column (optional)</label>
                 <Select value={mapExternal} onValueChange={setMapExternal}>
-                  <SelectTrigger id="map-external" className="w-full">
+                  <SelectTrigger id="map-external" className="w-full mt-1">
                     <SelectValue placeholder="Select column" />
                   </SelectTrigger>
                   <SelectContent>
@@ -198,7 +199,7 @@ export function ImportCsvDialog({ trigger, onComplete }: ImportCsvDialogProps) {
         )}
 
         {stage === "preview" && (
-          <div className="space-y-4">
+          <div className="space-y-4 p-4">
             <div className="text-sm text-muted-foreground">Ready to import {parsedRows.length} rows.</div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setStage("map")}>Back</Button>
@@ -208,7 +209,7 @@ export function ImportCsvDialog({ trigger, onComplete }: ImportCsvDialogProps) {
         )}
 
         {stage === "done" && (
-          <div className="space-y-4">
+          <div className="space-y-4 p-4">
             <div className="text-sm">Import complete.</div>
             <div className="flex justify-end">
               <Button onClick={() => setOpen(false)}>Close</Button>
