@@ -1,5 +1,5 @@
 import { useMemo, useState, isValidElement, cloneElement } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
@@ -100,13 +100,16 @@ export function ImportCsvDialog({ trigger, onComplete }: ImportCsvDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <span onClick={() => { void startOpen(); }}>
-          {isValidElement(trigger) ? trigger : <span>{trigger}</span>}
-        </span>
+        <div onClick={() => { void startOpen(); }}>
+          {trigger}
+        </div>
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Import CSV</DialogTitle>
+          <DialogDescription>
+            Import transactions from a CSV file by mapping columns to transaction fields.
+          </DialogDescription>
         </DialogHeader>
 
         {error && <div className="text-red-500 text-sm">{error}</div>}
@@ -114,9 +117,11 @@ export function ImportCsvDialog({ trigger, onComplete }: ImportCsvDialogProps) {
         {stage === "select" && (
           <div className="space-y-4">
             <div>
-              <label className="text-sm">Account</label>
+              <label htmlFor="import-account" className="text-sm">Account</label>
               <Select value={accountId} onValueChange={setAccountId}>
-                <SelectTrigger className="w-full"><SelectValue placeholder="Select account" /></SelectTrigger>
+                <SelectTrigger id="import-account" className="w-full">
+                  <SelectValue placeholder="Select account" />
+                </SelectTrigger>
                 <SelectContent>
                   {accounts.map((a) => (
                     <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
@@ -125,8 +130,14 @@ export function ImportCsvDialog({ trigger, onComplete }: ImportCsvDialogProps) {
               </Select>
             </div>
             <div>
-              <label className="text-sm">CSV File</label>
-              <Input type="file" accept=".csv,text/csv" onChange={onFileChange} />
+              <label htmlFor="import-file" className="text-sm">CSV File</label>
+              <Input 
+                id="import-file"
+                name="csvFile"
+                type="file" 
+                accept=".csv,text/csv" 
+                onChange={onFileChange} 
+              />
             </div>
           </div>
         )}
@@ -135,36 +146,44 @@ export function ImportCsvDialog({ trigger, onComplete }: ImportCsvDialogProps) {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm">Date column</label>
+                <label htmlFor="map-date" className="text-sm">Date column</label>
                 <Select value={mapDate} onValueChange={setMapDate}>
-                  <SelectTrigger className="w-full"><SelectValue placeholder="Select column" /></SelectTrigger>
+                  <SelectTrigger id="map-date" className="w-full">
+                    <SelectValue placeholder="Select column" />
+                  </SelectTrigger>
                   <SelectContent>
                     {headers.map((h) => (<SelectItem key={h} value={h}>{h}</SelectItem>))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <label className="text-sm">Description column</label>
+                <label htmlFor="map-desc" className="text-sm">Description column</label>
                 <Select value={mapDesc} onValueChange={setMapDesc}>
-                  <SelectTrigger className="w-full"><SelectValue placeholder="Select column" /></SelectTrigger>
+                  <SelectTrigger id="map-desc" className="w-full">
+                    <SelectValue placeholder="Select column" />
+                  </SelectTrigger>
                   <SelectContent>
                     {headers.map((h) => (<SelectItem key={h} value={h}>{h}</SelectItem>))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <label className="text-sm">Amount column</label>
+                <label htmlFor="map-amount" className="text-sm">Amount column</label>
                 <Select value={mapAmount} onValueChange={setMapAmount}>
-                  <SelectTrigger className="w-full"><SelectValue placeholder="Select column" /></SelectTrigger>
+                  <SelectTrigger id="map-amount" className="w-full">
+                    <SelectValue placeholder="Select column" />
+                  </SelectTrigger>
                   <SelectContent>
                     {headers.map((h) => (<SelectItem key={h} value={h}>{h}</SelectItem>))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <label className="text-sm">External ID column (optional)</label>
+                <label htmlFor="map-external" className="text-sm">External ID column (optional)</label>
                 <Select value={mapExternal} onValueChange={setMapExternal}>
-                  <SelectTrigger className="w-full"><SelectValue placeholder="Select column" /></SelectTrigger>
+                  <SelectTrigger id="map-external" className="w-full">
+                    <SelectValue placeholder="Select column" />
+                  </SelectTrigger>
                   <SelectContent>
                     {["", ...headers].map((h, i) => (<SelectItem key={i} value={h}>{h || "(none)"}</SelectItem>))}
                   </SelectContent>
@@ -200,5 +219,3 @@ export function ImportCsvDialog({ trigger, onComplete }: ImportCsvDialogProps) {
     </Dialog>
   );
 }
-
-
