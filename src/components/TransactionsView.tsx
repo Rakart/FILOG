@@ -8,11 +8,12 @@ import { formatDate } from "./utils/dateUtils";
 import { ImportCsvDialog } from "./ImportCsvDialog";
 import { AddTransactionDialog } from "./AddTransactionDialog";
 import { listTransactions, deleteTransaction, type Transaction, listTransactionsFiltered, type TransactionFilters } from "../services/transactionsService";
-import { TransactionsFilterDialog, type TransactionsFilter } from "./TransactionsFilterDialog";
+import { listHoldings } from "../services/holdingsService";
 import { downloadCsv } from "./utils/csvUtils";
 
 export function TransactionsView() {
   const [rows, setRows] = useState<Transaction[]>([]);
+  const [holdings, setHoldings] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<TransactionFilters>({});
@@ -23,6 +24,8 @@ export function TransactionsView() {
     try {
       const data = Object.keys(filters).length ? await listTransactionsFiltered(filters) : await listTransactions();
       setRows(data);
+      const holdingsData = await listHoldings();
+      setHoldings(holdingsData);
     } catch (e: any) {
       setError(e.message || String(e));
     } finally {
@@ -31,14 +34,6 @@ export function TransactionsView() {
   };
 
   useEffect(() => { void refresh(); }, [filters]);
-
-// Mock holdings with cost basis
-const holdings = [
-  { symbol: 'AAPL', shares: 25, avgCostBasis: 145.60, currentPrice: 175.20, totalValue: 4380 },
-  { symbol: 'TSLA', shares: 15, avgCostBasis: 235.80, currentPrice: 248.50, totalValue: 3727.50 },
-  { symbol: 'MSFT', shares: 20, avgCostBasis: 285.40, currentPrice: 310.75, totalValue: 6215 },
-  { symbol: 'BTC', shares: 0.1524, avgCostBasis: 26200.00, currentPrice: 28500.00, totalValue: 4343.40 },
-];
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -65,16 +60,6 @@ const holdings = [
       <div className="flex items-center justify-between">
         <h2 className="text-2xl">Transactions & Reports</h2>
         <div className="flex items-center gap-3">
-          <TransactionsFilterDialog
-            initial={filters as TransactionsFilter}
-            onApply={(f) => { setFilters(f); void refresh(); }}
-            trigger={
-              <Button variant="outline" size="sm" className="rounded-sm">
-                <Filter className="h-4 w-4 mr-2" />
-                Filter
-              </Button>
-            }
-          />
           <Button
             variant="outline"
             size="sm"
