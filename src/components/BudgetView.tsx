@@ -1,30 +1,131 @@
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Progress } from "./ui/progress";
-import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import { Target, DollarSign, Home, Car, Plane, GraduationCap } from "lucide-react";
-import { formatDate } from "./utils/dateUtils";
-
-// Mock budget data
-const budgetCategories = [
-  { category: 'Housing', spent: 2100, budget: 2200, icon: Home, color: 'bg-blue-500' },
-  { category: 'Transportation', spent: 450, budget: 600, icon: Car, color: 'bg-green-500' },
-  { category: 'Food & Dining', spent: 680, budget: 800, icon: DollarSign, color: 'bg-yellow-500' },
-  { category: 'Entertainment', spent: 320, budget: 400, icon: Plane, color: 'bg-purple-500' },
-  { category: 'Shopping', spent: 540, budget: 500, icon: DollarSign, color: 'bg-red-500' },
-  { category: 'Education', spent: 150, budget: 300, icon: GraduationCap, color: 'bg-indigo-500' },
-];
-
-type Goal = { name: string; target: number; current: number; deadline: string; priority: 'High' | 'Medium' | 'Low'; color: string };
+import { Input } from "./ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Badge } from "./ui/badge";
+import { Trash2, Plus } from "lucide-react";
+import { listBudgets, createBudget, deleteBudget, type Budget } from "../services/budgetsService";
+import { listGoals, createGoal, deleteGoal, type Goal } from "../services/goalsService";
+import { listCategories } from "../services/categoriesService";
 
 export function BudgetView() {
-  const [financialGoals, setFinancialGoals] = useState<Goal[]>([
-    { name: 'Emergency Fund', target: 15000, current: 8500, deadline: '2024-12-31', priority: 'High', color: 'bg-red-500' },
-    { name: 'Vacation to Europe', target: 5000, current: 2800, deadline: '2025-06-01', priority: 'Medium', color: 'bg-blue-500' },
-    { name: 'Down Payment', target: 50000, current: 12000, deadline: '2026-01-01', priority: 'High', color: 'bg-green-500' },
-    { name: 'New Car', target: 25000, current: 18500, deadline: '2025-03-01', priority: 'Low', color: 'bg-yellow-500' },
-  ]);
+  const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [newCategory, setNewCategory] = useState("");
+  const [newAmount, setNewAmount] = useState("");
+  const [newPeriod, setNewPeriod] = useState<"monthly" | "yearly">("monthly");
+  const [newGoalName, setNewGoalName] = useState("");
+  const [newGoalTarget, setNewGoalTarget] = useState("");
+  const [newGoalCurrent, setNewGoalCurrent] = useState("");
+  const [newGoalDeadline, setNewGoalDeadline] = useState("");
+  const [newGoalPriority, setNewGoalPriority] = useState<"high" | "medium" | "low">("medium");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const refreshBudgets = async () => {
+    try {
+      setError(null);
+      const data = await listBudgets();
+      setBudgets(data);
+    } catch (e: any) {
+      setError(e.message || String(e));
+    }
+  };
+
+  const refreshGoals = async () => {
+    try {
+      const data = await listGoals();
+      setGoals(data);
+    } catch (e: any) {
+      setError(e.message || String(e));
+    }
+  };
+
+  const refreshCategories = async () => {
+    try {
+      const data = await listCategories();
+      setCategories(data);
+    } catch (e: any) {
+      setError(e.message || String(e));
+    }
+  };
+
+  useEffect(() => {
+    void refreshBudgets();
+    void refreshGoals();
+    void refreshCategories();
+  }, []);
+
+  const onAddBudget = async () => {
+    if (!newCategory || !newAmount) return;
+    setLoading(true);
+    try {
+      await createBudget({
+        category_id: newCategory,
+        amount: Number(newAmount),
+        period: newPeriod
+      });
+      setNewCategory("");
+      setNewAmount("");
+      setNewPeriod("monthly");
+      await refreshBudgets();
+    } catch (e: any) {
+      setError(e.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onDeleteBudget = async (id: string) => {
+    setLoading(true);
+    try {
+      await deleteBudget(id);
+      await refreshBudgets();
+    } catch (e: any) {
+      setError(e.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onAddGoal = async () => {
+    if (!newGoalName || !newGoalTarget) return;
+    setLoading(true);
+    try {
+      await createGoal({
+        name: newGoalName,
+        target_amount: Number(newGoalTarget),
+        current_amount: Number(newGoalCurrent) || 0,
+        deadline: newGoalDeadline,
+        priority: newGoalPriority
+      });
+      setNewGoalName("");
+      setNewGoalTarget("");
+      setNewGoalCurrent("");
+      setNewGoalDeadline("");
+      setNewGoalPriority("medium");
+      await refreshGoals();
+    } catch (e: any) {
+      setError(e.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onDeleteGoal = async (id: string) => {
+    setLoading(true);
+    try {
+      await deleteGoal(id);
+      await refreshGoals();
+    } catch (e: any) {
+      setError(e.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -34,176 +135,177 @@ export function BudgetView() {
     }).format(amount);
   };
 
-  const totalBudget = budgetCategories.reduce((sum, cat) => sum + cat.budget, 0);
-  const totalSpent = budgetCategories.reduce((sum, cat) => sum + cat.spent, 0);
-  const remainingBudget = totalBudget - totalSpent;
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'High': return 'bg-red-500';
-      case 'Medium': return 'bg-yellow-500';
-      case 'Low': return 'bg-green-500';
-      default: return 'bg-gray-500';
-    }
+  const getCategoryName = (categoryId: string) => {
+    const category = categories.find(c => c.id === categoryId);
+    return category ? category.name : 'Unknown';
   };
 
   return (
     <div className="p-6 space-y-6 w-full h-full">
-      {/* Budget Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="rounded-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Budget</p>
-                <p className="text-2xl">{formatCurrency(totalBudget)}</p>
-              </div>
-              <DollarSign className="h-8 w-8 text-blue-500" />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="rounded-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Spent</p>
-                <p className="text-2xl text-red-400">{formatCurrency(totalSpent)}</p>
-              </div>
-              <DollarSign className="h-8 w-8 text-red-400" />
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="rounded-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Remaining</p>
-                <p className="text-2xl text-green-400">{formatCurrency(remainingBudget)}</p>
-              </div>
-              <DollarSign className="h-8 w-8 text-green-400" />
-            </div>
-          </CardContent>
-        </Card>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl">Budget & Goals</h2>
       </div>
 
-      {/* Monthly Budget Tracker */}
+      {error && <div className="text-sm text-red-500">{error}</div>}
+
+      {/* Budgets Section */}
       <Card className="rounded-sm">
         <CardHeader>
-          <CardTitle>October 2024 Budget</CardTitle>
-          <p className="text-sm text-muted-foreground">Track your spending across categories</p>
+          <CardTitle>Set Budgets</CardTitle>
+          <p className="text-sm text-muted-foreground">Create spending limits for each category</p>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {budgetCategories.map((category, index) => {
-              const percentage = (category.spent / category.budget) * 100;
-              const isOverBudget = category.spent > category.budget;
-              
-              return (
-                <div key={index} className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-sm ${category.color}`}>
-                        <category.icon className="h-4 w-4 text-white" />
-                      </div>
-                      <span className="font-medium">{category.category}</span>
-                    </div>
-                    <div className="text-right">
-                      <p className={`font-medium ${isOverBudget ? 'text-red-400' : 'text-foreground'}`}>
-                        {formatCurrency(category.spent)}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        of {formatCurrency(category.budget)}
-                      </p>
-                    </div>
-                  </div>
-                  <Progress 
-                    value={Math.min(percentage, 100)} 
-                    className="h-2 bg-progress-background"
-                    style={{
-                      background: isOverBudget ? '#3f1f1f' : undefined
-                    }}
-                  />
-                  <div className="flex justify-between text-sm">
-                    <span className={percentage > 90 ? 'text-red-400' : 'text-muted-foreground'}>
-                      {percentage.toFixed(0)}% used
-                    </span>
-                    <span className={isOverBudget ? 'text-red-400' : 'text-green-400'}>
-                      {isOverBudget ? 'Over budget' : `${formatCurrency(category.budget - category.spent)} left`}
-                    </span>
-                  </div>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-3 gap-2 items-center">
+            <Select value={newCategory} onValueChange={setNewCategory}>
+              <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+              <SelectContent>
+                {categories.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Input 
+              type="number" 
+              step="0.01" 
+              placeholder="Amount" 
+              value={newAmount} 
+              onChange={(e) => setNewAmount(e.target.value)} 
+            />
+            <Select value={newPeriod} onValueChange={(v: any) => setNewPeriod(v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="monthly">Monthly</SelectItem>
+                <SelectItem value="yearly">Yearly</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <Button 
+            onClick={onAddBudget} 
+            disabled={loading || !newCategory || !newAmount}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Budget
+          </Button>
+          
+          <div className="border-t border-border pt-4 space-y-2">
+            {budgets.map((budget) => (
+              <div key={budget.id} className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">{getCategoryName(budget.category_id)}</span>
+                  <Badge variant="outline">{budget.period}</Badge>
+                  <span className="text-sm text-muted-foreground">
+                    {formatCurrency(budget.amount)}
+                  </span>
                 </div>
-              );
-            })}
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="rounded-sm" 
+                  onClick={() => onDeleteBudget(budget.id)}
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Delete
+                </Button>
+              </div>
+            ))}
+            {!budgets.length && (
+              <div className="text-sm text-muted-foreground">No budgets set yet. Create one above.</div>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Financial Goals */}
+      {/* Financial Goals Section */}
       <Card className="rounded-sm">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Target className="h-5 w-5" />
-              Financial Goals
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">Track progress toward your savings goals</p>
+        <CardHeader>
+          <CardTitle>Financial Goals</CardTitle>
+          <p className="text-sm text-muted-foreground">Set and track your financial objectives</p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-2 items-center">
+            <Input 
+              placeholder="Goal name" 
+              value={newGoalName} 
+              onChange={(e) => setNewGoalName(e.target.value)} 
+            />
+            <Input 
+              type="number" 
+              step="0.01" 
+              placeholder="Target amount" 
+              value={newGoalTarget} 
+              onChange={(e) => setNewGoalTarget(e.target.value)} 
+            />
+            <Input 
+              type="number" 
+              step="0.01" 
+              placeholder="Current amount" 
+              value={newGoalCurrent} 
+              onChange={(e) => setNewGoalCurrent(e.target.value)} 
+            />
+            <Input 
+              type="date" 
+              placeholder="Deadline" 
+              value={newGoalDeadline} 
+              onChange={(e) => setNewGoalDeadline(e.target.value)} 
+            />
+            <Select value={newGoalPriority} onValueChange={(v: any) => setNewGoalPriority(v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="high">High Priority</SelectItem>
+                <SelectItem value="medium">Medium Priority</SelectItem>
+                <SelectItem value="low">Low Priority</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          <Button variant="outline" size="sm" className="rounded-sm">
+          <Button 
+            onClick={onAddGoal} 
+            disabled={loading || !newGoalName || !newGoalTarget}
+          >
+            <Plus className="h-4 w-4 mr-2" />
             Add Goal
           </Button>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {financialGoals.map((goal, index) => {
-              const percentage = (goal.current / goal.target) * 100;
-              const remaining = goal.target - goal.current;
-              const daysUntilDeadline = Math.ceil((new Date(goal.deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-              
+          
+          <div className="border-t border-border pt-4 space-y-2">
+            {goals.map((goal) => {
+              const progress = (goal.current_amount / goal.target_amount) * 100;
               return (
-                <div key={index} className="p-4 bg-muted/30 rounded-sm space-y-4">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h4 className="font-medium">{goal.name}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Target: {formatCurrency(goal.target)} by {formatDate(goal.deadline)}
-                      </p>
+                <div key={goal.id} className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm font-medium">{goal.name}</span>
+                      <Badge variant={goal.priority === 'high' ? 'destructive' : goal.priority === 'medium' ? 'default' : 'secondary'}>
+                        {goal.priority}
+                      </Badge>
                     </div>
-                    <Badge variant="outline" className={`${getPriorityColor(goal.priority)} text-white rounded-sm`}>
-                      {goal.priority}
-                    </Badge>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Progress</span>
-                      <span>{formatCurrency(goal.current)} / {formatCurrency(goal.target)}</span>
+                    <div className="text-sm text-muted-foreground">
+                      {formatCurrency(goal.current_amount)} / {formatCurrency(goal.target_amount)} 
+                      ({progress.toFixed(1)}%)
                     </div>
-                    <Progress value={percentage} className="h-3 bg-progress-background" />
-                    <div className="flex justify-between text-sm text-muted-foreground">
-                      <span>{percentage.toFixed(1)}% complete</span>
-                      <span>{daysUntilDeadline} days left</span>
+                    <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full" 
+                        style={{ width: `${Math.min(progress, 100)}%` }}
+                      ></div>
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Deadline: {new Date(goal.deadline).toLocaleDateString()}
                     </div>
                   </div>
-                  
-                  <div className="pt-2 border-t border-border">
-                    <p className="text-sm">
-                      <span className="text-muted-foreground">Remaining: </span>
-                      <span className="font-medium text-blue-400">{formatCurrency(remaining)}</span>
-                    </p>
-                    {daysUntilDeadline > 0 && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Save {formatCurrency(remaining / daysUntilDeadline)} per day to reach goal
-                      </p>
-                    )}
-                    <div className="mt-3 flex justify-end">
-                      <Button variant="outline" size="sm" className="rounded-sm" onClick={() => setFinancialGoals(prev => prev.filter((_, i) => i !== index))}>Delete Goal</Button>
-                    </div>
-                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="rounded-sm ml-4" 
+                    onClick={() => onDeleteGoal(goal.id)}
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Delete
+                  </Button>
                 </div>
               );
             })}
+            {!goals.length && (
+              <div className="text-sm text-muted-foreground">No goals set yet. Create one above.</div>
+            )}
           </div>
         </CardContent>
       </Card>

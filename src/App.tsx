@@ -45,6 +45,7 @@ function SettingsView() {
   const [newTransactionDate, setNewTransactionDate] = useState("");
   const [newTransactionDescription, setNewTransactionDescription] = useState("");
   const [newTransactionAmount, setNewTransactionAmount] = useState("");
+  const [newTransactionCategory, setNewTransactionCategory] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -146,12 +147,14 @@ function SettingsView() {
         account_id: newTransactionAccount,
         posted_at: newTransactionDate,
         description: newTransactionDescription,
-        amount: Number(newTransactionAmount)
+        amount: Number(newTransactionAmount),
+        category_id: newTransactionCategory || undefined
       });
       setNewTransactionAccount("");
       setNewTransactionDate("");
       setNewTransactionDescription("");
       setNewTransactionAmount("");
+      setNewTransactionCategory("");
       await refreshTransactions();
     } catch (e: any) {
       setError(e.message || String(e));
@@ -243,6 +246,14 @@ function SettingsView() {
               ))}
             </SelectContent>
           </Select>
+          <Select value={newTransactionCategory} onValueChange={setNewTransactionCategory}>
+            <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+            <SelectContent>
+              {categories.map((c) => (
+                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Input 
             type="date" 
             value={newTransactionDate} 
@@ -250,16 +261,17 @@ function SettingsView() {
             placeholder="Date"
           />
           <Input 
-            placeholder="Description" 
-            value={newTransactionDescription} 
-            onChange={(e) => setNewTransactionDescription(e.target.value)} 
-          />
-          <Input 
             type="number" 
             step="0.01" 
             placeholder="Amount" 
             value={newTransactionAmount} 
             onChange={(e) => setNewTransactionAmount(e.target.value)} 
+          />
+          <Input 
+            placeholder="Description" 
+            value={newTransactionDescription} 
+            onChange={(e) => setNewTransactionDescription(e.target.value)} 
+            className="col-span-2"
           />
         </div>
         <Button 
