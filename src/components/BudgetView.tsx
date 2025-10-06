@@ -5,22 +5,22 @@ import { Input } from "./ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Badge } from "./ui/badge";
 import { Trash2, Plus } from "lucide-react";
-import { listBudgets, createBudget, deleteBudget, type Budget } from "../services/budgetsService";
+import { listBudgets, createBudget, deleteBudget, updateBudget, type BudgetWithItems } from "../services/budgetsService";
 import { listGoals, createGoal, deleteGoal, type Goal } from "../services/goalsService";
-import { listCategories } from "../services/categoriesService";
+import { listCategories, createCategory } from "../services/categoriesService";
+import { updateBudgetItem } from "../services/budgetItemsService";
 
 export function BudgetView() {
-  const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [budgets, setBudgets] = useState<BudgetWithItems[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
-  const [newCategory, setNewCategory] = useState("");
-  const [newAmount, setNewAmount] = useState("");
-  const [newPeriod, setNewPeriod] = useState<"monthly" | "yearly">("monthly");
   const [newGoalName, setNewGoalName] = useState("");
   const [newGoalTarget, setNewGoalTarget] = useState("");
   const [newGoalCurrent, setNewGoalCurrent] = useState("");
   const [newGoalDeadline, setNewGoalDeadline] = useState("");
   const [newGoalPriority, setNewGoalPriority] = useState<"high" | "medium" | "low">("medium");
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryKind, setNewCategoryKind] = useState<"income" | "expense" | "">("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -58,25 +58,6 @@ export function BudgetView() {
     void refreshCategories();
   }, []);
 
-  const onAddBudget = async () => {
-    if (!newCategory || !newAmount) return;
-    setLoading(true);
-    try {
-      await createBudget({
-        category_id: newCategory,
-        amount: Number(newAmount),
-        period: newPeriod
-      });
-      setNewCategory("");
-      setNewAmount("");
-      setNewPeriod("monthly");
-      await refreshBudgets();
-    } catch (e: any) {
-      setError(e.message || String(e));
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const onDeleteBudget = async (id: string) => {
     setLoading(true);
@@ -126,6 +107,34 @@ export function BudgetView() {
     }
   };
 
+  const onAddCategory = async () => {
+    if (!newCategoryName || !newCategoryKind) return;
+    setLoading(true);
+    try {
+      await createCategory({ name: newCategoryName, kind: newCategoryKind });
+      setNewCategoryName("");
+      setNewCategoryKind("");
+      await refreshCategories();
+      await refreshBudgets(); // Refresh budgets since a new one will be created automatically
+    } catch (e: any) {
+      setError(e.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onUpdateBudgetItem = async (budgetItemId: string, amount: number) => {
+    setLoading(true);
+    try {
+      await updateBudgetItem(budgetItemId, amount);
+      await refreshBudgets();
+    } catch (e: any) {
+      setError(e.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -148,54 +157,57 @@ export function BudgetView() {
 
       {error && <div className="text-sm text-red-500">{error}</div>}
 
+      {/* Categories Section */}
+      <Card className="rounded-sm">
+        <CardHeader>
+          <CardTitle>Categories & Budgets</CardTitle>
+          <p className="text-sm text-muted-foreground">Create categories and automatically get budgets for each one</p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex gap-2 items-center">
+            <Input 
+              placeholder="Category name" 
+              value={newCategoryName} 
+              onChange={(e) => setNewCategoryName(e.target.value)} 
+            />
+            <Select value={newCategoryKind} onValueChange={(v: any) => setNewCategoryKind(v)}>
+              <SelectTrigger className="w-40"><SelectValue placeholder="Kind" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="income">Income</SelectItem>
+                <SelectItem value="expense">Expense</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button 
+              onClick={onAddCategory} 
+              disabled={loading || !newCategoryName || !newCategoryKind}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Category
+            </Button>
+          </div>
+          <div className="text-xs text-muted-foreground">
+            When you create a category, a budget will be automatically created for it.
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Budgets Section */}
       <Card className="rounded-sm">
         <CardHeader>
-          <CardTitle>Set Budgets</CardTitle>
-          <p className="text-sm text-muted-foreground">Create spending limits for each category</p>
+          <CardTitle>Budget Management</CardTitle>
+          <p className="text-sm text-muted-foreground">Set spending limits for each category</p>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-3 gap-2 items-center">
-            <Select value={newCategory} onValueChange={setNewCategory}>
-              <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
-              <SelectContent>
-                {categories.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Input 
-              type="number" 
-              step="0.01" 
-              placeholder="Amount" 
-              value={newAmount} 
-              onChange={(e) => setNewAmount(e.target.value)} 
-            />
-            <Select value={newPeriod} onValueChange={(v: any) => setNewPeriod(v)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="monthly">Monthly</SelectItem>
-                <SelectItem value="yearly">Yearly</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <Button 
-            onClick={onAddBudget} 
-            disabled={loading || !newCategory || !newAmount}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Budget
-          </Button>
-          
-          <div className="border-t border-border pt-4 space-y-2">
-            {budgets.map((budget) => (
-              <div key={budget.id} className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">{getCategoryName(budget.category_id)}</span>
-                  <Badge variant="outline">{budget.period}</Badge>
-                  <span className="text-sm text-muted-foreground">
-                    {formatCurrency(budget.amount)}
-                  </span>
+          {budgets.map((budget) => (
+            <div key={budget.id} className="border border-border rounded-lg p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-medium">
+                    Budget Period: {new Date(budget.period_start).toLocaleDateString()} - {new Date(budget.period_end).toLocaleDateString()}
+                  </h4>
+                  <p className="text-xs text-muted-foreground">
+                    {budget.period || 'monthly'} budget
+                  </p>
                 </div>
                 <Button 
                   variant="outline" 
@@ -204,14 +216,44 @@ export function BudgetView() {
                   onClick={() => onDeleteBudget(budget.id)}
                 >
                   <Trash2 className="h-4 w-4 mr-1" />
-                  Delete
+                  Delete Budget
                 </Button>
               </div>
-            ))}
-            {!budgets.length && (
-              <div className="text-sm text-muted-foreground">No budgets set yet. Create one above.</div>
-            )}
-          </div>
+              
+              <div className="space-y-2">
+                {budget.budget_items?.map((item) => (
+                  <div key={item.id} className="flex items-center justify-between bg-muted/50 p-2 rounded">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">{item.categories.name}</span>
+                      <Badge variant={item.categories.kind === 'income' ? 'default' : 'destructive'}>
+                        {item.categories.kind}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Input 
+                        type="number" 
+                        step="0.01" 
+                        value={item.amount} 
+                        onChange={(e) => onUpdateBudgetItem(item.id, Number(e.target.value))}
+                        className="w-24 h-8"
+                      />
+                      <span className="text-xs text-muted-foreground">USD</span>
+                    </div>
+                  </div>
+                ))}
+                {!budget.budget_items?.length && (
+                  <div className="text-sm text-muted-foreground text-center py-2">
+                    No budget items yet. Create categories to automatically get budget items.
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+          {!budgets.length && (
+            <div className="text-sm text-muted-foreground text-center py-4">
+              No budgets yet. Create categories to automatically get budgets.
+            </div>
+          )}
         </CardContent>
       </Card>
 
