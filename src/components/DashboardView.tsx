@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { ArrowUpRight, ArrowDownRight, CreditCard, Banknote, Building2 } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, CreditCard, Banknote, Building2, Download } from "lucide-react";
 import { formatDate, formatChartDate } from "./utils/dateUtils";
 import { listTransactions, type Transaction } from "../services/transactionsService";
+import { downloadCsv } from "./utils/csvUtils";
 
 // Mock data for portfolio performance
 const portfolioData = [
@@ -137,22 +138,31 @@ export function DashboardView() {
         <CardHeader>
           <CardTitle>Recent Transactions</CardTitle>
           <p className="text-sm text-muted-foreground">Latest financial activity</p>
+          <div className="flex justify-end">
+            <button
+              className="text-sm underline"
+              onClick={() => {
+                const rows = recent.map(r => ({ id: r.id, date: r.posted_at, description: r.description, amount: r.amount, account_id: r.account_id, category_id: r.category_id ?? '' }));
+                downloadCsv('transactions_export.csv', rows);
+              }}
+            >
+              <span className="inline-flex items-center gap-1"><Download className="h-4 w-4" /> Export</span>
+            </button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {recentTransactions.map((transaction) => (
+            {recent.map((transaction) => (
               <div key={transaction.id} className="flex items-center justify-between p-4 bg-muted/30 rounded-sm">
                 <div className="flex items-center gap-4">
                   <div className={`p-2 rounded-sm ${
-                    transaction.type === 'income' ? 'bg-green-400/20 text-green-400' :
-                    transaction.type === 'expense' ? 'bg-red-400/20 text-red-400' :
-                    'bg-blue-400/20 text-blue-400'
+                    transaction.amount >= 0 ? 'bg-green-400/20 text-green-400' : 'bg-red-400/20 text-red-400'
                   }`}>
-                    <transaction.icon className="h-4 w-4" />
+                    <ArrowUpRight className="h-4 w-4" />
                   </div>
                   <div>
                     <p className="font-medium">{transaction.description}</p>
-                    <p className="text-sm text-muted-foreground">{formatDate(transaction.date)}</p>
+                    <p className="text-sm text-muted-foreground">{formatDate(transaction.posted_at)}</p>
                   </div>
                 </div>
                 <div className={`text-right ${transaction.amount >= 0 ? 'text-green-400' : 'text-red-400'}`}>

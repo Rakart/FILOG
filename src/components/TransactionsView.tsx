@@ -7,18 +7,21 @@ import { Download, Plus, Filter, Upload, Trash2 } from "lucide-react";
 import { formatDate } from "./utils/dateUtils";
 import { ImportCsvDialog } from "./ImportCsvDialog";
 import { AddTransactionDialog } from "./AddTransactionDialog";
-import { listTransactions, deleteTransaction, type Transaction } from "../services/transactionsService";
+import { listTransactions, deleteTransaction, type Transaction, listTransactionsFiltered, type TransactionFilters } from "../services/transactionsService";
+import { TransactionsFilterDialog, type TransactionsFilter } from "./TransactionsFilterDialog";
+import { downloadCsv } from "./utils/csvUtils";
 
 export function TransactionsView() {
   const [rows, setRows] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [filters, setFilters] = useState<TransactionFilters>({});
 
   const refresh = async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await listTransactions();
+      const data = Object.keys(filters).length ? await listTransactionsFiltered(filters) : await listTransactions();
       setRows(data);
     } catch (e: any) {
       setError(e.message || String(e));
@@ -62,11 +65,25 @@ const holdings = [
       <div className="flex items-center justify-between">
         <h2 className="text-2xl">Transactions & Reports</h2>
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" className="rounded-sm">
-            <Filter className="h-4 w-4 mr-2" />
-            Filter
-          </Button>
-          <Button variant="outline" size="sm" className="rounded-sm">
+          <TransactionsFilterDialog
+            initial={filters as TransactionsFilter}
+            onApply={(f) => { setFilters(f); void refresh(); }}
+            trigger={
+              <Button variant="outline" size="sm" className="rounded-sm">
+                <Filter className="h-4 w-4 mr-2" />
+                Filter
+              </Button>
+            }
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-sm"
+            onClick={() => {
+              const csvRows = rows.map(r => ({ id: r.id, date: r.posted_at, description: r.description, amount: r.amount, account_id: r.account_id, category_id: r.category_id ?? '' }));
+              downloadCsv('transactions_export.csv', csvRows);
+            }}
+          >
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
@@ -77,6 +94,9 @@ const holdings = [
                 Import CSV
               </Button>
             }
+            // refresh after commit
+            // @ts-ignore - extend component to accept onComplete if needed
+            onComplete={() => { void refresh(); }}
           />
           <AddTransactionDialog
             onCreated={refresh}
@@ -188,15 +208,41 @@ const holdings = [
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Button variant="outline" className="rounded-sm h-20 flex flex-col gap-2">
+            <Button
+              variant="outline"
+              className="rounded-sm h-20 flex flex-col gap-2"
+              onClick={() => {
+                const year = new Date().getFullYear();
+                const rowsCsv = rows
+                  .filter(r => (r.posted_at || '').startsWith(String(year)))
+                  .map(r => ({ date: r.posted_at, description: r.description, amount: r.amount, category_kind: r.amount >= 0 ? 'income' : 'expense', category_name: r.category_id ? 'Categorized' : 'Uncategorized' }));
+                downloadCsv(`${year}_tax_summary.csv`, rowsCsv);
+              }}
+            >
               <Download className="h-5 w-5" />
               <span>2024 Tax Summary</span>
             </Button>
-            <Button variant="outline" className="rounded-sm h-20 flex flex-col gap-2">
+            <Button
+              variant="outline"
+              className="rounded-sm h-20 flex flex-col gap-2"
+              onClick={() => {
+                // Cost basis from holdings table
+                // For MVP, export transactions as a proxy; deeper cost basis needs lot tracking
+                const rowsCsv = rows.map(r => ({ symbol: '', quantity: '', cost_basis: '', total_cost: '', description: r.description, date: r.posted_at }));
+                downloadCsv('cost_basis_report.csv', rowsCsv);
+              }}
+            >
               <Download className="h-5 w-5" />
               <span>Cost Basis Report</span>
             </Button>
-            <Button variant="outline" className="rounded-sm h-20 flex flex-col gap-2">
+            <Button
+              variant="outline"
+              className="rounded-sm h-20 flex flex-col gap-2"
+              onClick={() => {
+                const rowsCsv = rows.map(r => ({ id: r.id, date: r.posted_at, description: r.description, amount: r.amount, account_id: r.account_id, category_id: r.category_id ?? '' }));
+                downloadCsv('transactions_export.csv', rowsCsv);
+              }}
+            >
               <Download className="h-5 w-5" />
               <span>Transaction Export</span>
             </Button>

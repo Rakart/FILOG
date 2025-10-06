@@ -7,9 +7,10 @@ import { listAccounts, createImportJob, commitTransactions, ParsedTransactionRow
 
 interface ImportCsvDialogProps {
   trigger: React.ReactNode;
+  onComplete?: () => void;
 }
 
-export function ImportCsvDialog({ trigger }: ImportCsvDialogProps) {
+export function ImportCsvDialog({ trigger, onComplete }: ImportCsvDialogProps) {
   const [open, setOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [headers, setHeaders] = useState<string[]>([]);
@@ -88,6 +89,7 @@ export function ImportCsvDialog({ trigger }: ImportCsvDialogProps) {
       const jobId = await createImportJob(file?.name || "csv");
       await commitTransactions(jobId, parsedRows);
       setStage("done");
+      onComplete?.();
     } catch (e: any) {
       setError(e.message || String(e));
     } finally {
