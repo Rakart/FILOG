@@ -49,6 +49,29 @@ export async function listTransactionsFiltered(filters: TransactionFilters): Pro
   return (data ?? []) as Transaction[];
 }
 
+export async function createTransaction(transaction: {
+  account_id: string;
+  posted_at: string;
+  description: string;
+  amount: number;
+  category_id?: string;
+}): Promise<void> {
+  const { data: userData } = await supabase.auth.getUser();
+  const userId = userData.user?.id;
+  if (!userId) throw new Error("Not authenticated");
+  const { error } = await supabase
+    .from("transactions")
+    .insert({
+      user_id: userId,
+      account_id: transaction.account_id,
+      posted_at: transaction.posted_at,
+      description: transaction.description,
+      amount: transaction.amount,
+      category_id: transaction.category_id || null,
+    });
+  if (error) throw error;
+}
+
 export async function deleteTransaction(id: string): Promise<void> {
   const { data: userData } = await supabase.auth.getUser();
   const userId = userData.user?.id;
