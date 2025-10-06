@@ -12,6 +12,7 @@ import { Input } from './components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './components/ui/select';
 import { listCategories, createCategory, deleteCategory } from './services/categoriesService';
 import { listAccounts, createAccount, deleteAccount } from './services/accountsService';
+import { listTransactions, createTransaction, deleteTransaction } from './services/transactionsService';
 
 // Mock data for header
 const mockHeaderData = {
@@ -35,10 +36,15 @@ function ReportsView() {
 function SettingsView() {
   const [categories, setCategories] = useState<any[]>([]);
   const [accounts, setAccounts] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<any[]>([]);
   const [newName, setNewName] = useState("");
   const [newKind, setNewKind] = useState<"income" | "expense" | "">("");
   const [newAccountName, setNewAccountName] = useState("");
   const [newAccountType, setNewAccountType] = useState<"cash" | "checking" | "credit_card" | "loan" | "brokerage" | "">("");
+  const [newTransactionAccount, setNewTransactionAccount] = useState("");
+  const [newTransactionDate, setNewTransactionDate] = useState("");
+  const [newTransactionDescription, setNewTransactionDescription] = useState("");
+  const [newTransactionAmount, setNewTransactionAmount] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -62,9 +68,20 @@ function SettingsView() {
     }
   };
 
+  const refreshTransactions = async () => {
+    try {
+      setError(null);
+      const data = await listTransactions();
+      setTransactions(data);
+    } catch (e: any) {
+      setError(e.message || String(e));
+    }
+  };
+
   useEffect(() => { 
     void refreshCategories(); 
     void refreshAccounts();
+    void refreshTransactions();
   }, []);
 
   const onAddCategory = async () => {
@@ -114,6 +131,40 @@ function SettingsView() {
     try {
       await deleteAccount(id);
       await refreshAccounts();
+    } catch (e: any) {
+      setError(e.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onAddTransaction = async () => {
+    if (!newTransactionAccount || !newTransactionDate || !newTransactionDescription || !newTransactionAmount) return;
+    setLoading(true);
+    try {
+      await createTransaction({
+        account_id: newTransactionAccount,
+        posted_at: newTransactionDate,
+        description: newTransactionDescription,
+        amount: Number(newTransactionAmount)
+      });
+      setNewTransactionAccount("");
+      setNewTransactionDate("");
+      setNewTransactionDescription("");
+      setNewTransactionAmount("");
+      await refreshTransactions();
+    } catch (e: any) {
+      setError(e.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onDeleteTransaction = async (id: string) => {
+    setLoading(true);
+    try {
+      await deleteTransaction(id);
+      await refreshTransactions();
     } catch (e: any) {
       setError(e.message || String(e));
     } finally {
@@ -176,6 +227,58 @@ function SettingsView() {
           ))}
           {!accounts.length && (
             <div className="text-sm text-muted-foreground">No accounts yet. Create one to use Import CSV and Add Transaction.</div>
+          )}
+        </div>
+      </Card>
+
+      <Card className="p-6 rounded-sm w-full space-y-4">
+        <h2 className="text-xl">Transactions</h2>
+        {error && <div className="text-sm text-red-500">{error}</div>}
+        <div className="grid grid-cols-2 gap-2 items-center">
+          <Select value={newTransactionAccount} onValueChange={setNewTransactionAccount}>
+            <SelectTrigger><SelectValue placeholder="Select account" /></SelectTrigger>
+            <SelectContent>
+              {accounts.map((a) => (
+                <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Input 
+            type="date" 
+            value={newTransactionDate} 
+            onChange={(e) => setNewTransactionDate(e.target.value)} 
+            placeholder="Date"
+          />
+          <Input 
+            placeholder="Description" 
+            value={newTransactionDescription} 
+            onChange={(e) => setNewTransactionDescription(e.target.value)} 
+          />
+          <Input 
+            type="number" 
+            step="0.01" 
+            placeholder="Amount" 
+            value={newTransactionAmount} 
+            onChange={(e) => setNewTransactionAmount(e.target.value)} 
+          />
+        </div>
+        <Button 
+          onClick={onAddTransaction} 
+          disabled={loading || !newTransactionAccount || !newTransactionDate || !newTransactionDescription || !newTransactionAmount}
+        >
+          Add Transaction
+        </Button>
+        <div className="border-t border-border pt-4 space-y-2">
+          {transactions.map((t) => (
+            <div key={t.id} className="flex items-center justify-between">
+              <div className="text-sm">
+                {t.description} - ${t.amount} ({new Date(t.posted_at).toLocaleDateString()})
+              </div>
+              <Button variant="outline" size="sm" className="rounded-sm" onClick={() => onDeleteTransaction(t.id)}>Delete</Button>
+            </div>
+          ))}
+          {!transactions.length && (
+            <div className="text-sm text-muted-foreground">No transactions yet. Create one above.</div>
           )}
         </div>
       </Card>
