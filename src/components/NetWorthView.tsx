@@ -6,6 +6,7 @@ import { TrendingUp, TrendingDown, Plus, Trash2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { createHolding, deleteHolding, listHoldings, type Holding } from "../services/holdingsService";
+import { listAssetsLiabilities, createAssetLiability, deleteAssetLiability, type AssetLiability } from "../services/assetsLiabilitiesService";
 import { formatDate } from "./utils/dateUtils";
 
 // Mock net worth history data
@@ -40,17 +41,26 @@ const liabilities = [
 
 export function NetWorthView() {
   const [holdings, setHoldings] = useState<Holding[]>([]);
+  const [assetsLiabilities, setAssetsLiabilities] = useState<AssetLiability[]>([]);
   const [symbol, setSymbol] = useState("");
   const [quantity, setQuantity] = useState<string>("");
   const [costBasis, setCostBasis] = useState<string>("");
+  const [newAssetName, setNewAssetName] = useState("");
+  const [newAssetAmount, setNewAssetAmount] = useState<string>("");
+  const [newAssetCategory, setNewAssetCategory] = useState("");
+  const [newLiabilityName, setNewLiabilityName] = useState("");
+  const [newLiabilityAmount, setNewLiabilityAmount] = useState<string>("");
+  const [newLiabilityCategory, setNewLiabilityCategory] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = async () => {
     setError(null);
     try {
-      const data = await listHoldings();
-      setHoldings(data);
+      const holdingsData = await listHoldings();
+      setHoldings(holdingsData);
+      const assetsData = await listAssetsLiabilities();
+      setAssetsLiabilities(assetsData);
     } catch (e: any) {
       setError(e.message || String(e));
     }
@@ -66,6 +76,60 @@ export function NetWorthView() {
       setSymbol("");
       setQuantity("");
       setCostBasis("");
+      await refresh();
+    } catch (e: any) {
+      setError(e.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onAddAsset = async () => {
+    if (!newAssetName || !newAssetAmount) return;
+    setLoading(true);
+    try {
+      await createAssetLiability({
+        name: newAssetName,
+        amount: Number(newAssetAmount),
+        type: 'asset',
+        category: newAssetCategory || 'Other'
+      });
+      setNewAssetName("");
+      setNewAssetAmount("");
+      setNewAssetCategory("");
+      await refresh();
+    } catch (e: any) {
+      setError(e.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onAddLiability = async () => {
+    if (!newLiabilityName || !newLiabilityAmount) return;
+    setLoading(true);
+    try {
+      await createAssetLiability({
+        name: newLiabilityName,
+        amount: Number(newLiabilityAmount),
+        type: 'liability',
+        category: newLiabilityCategory || 'Other'
+      });
+      setNewLiabilityName("");
+      setNewLiabilityAmount("");
+      setNewLiabilityCategory("");
+      await refresh();
+    } catch (e: any) {
+      setError(e.message || String(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onDeleteAssetLiability = async (id: string) => {
+    setLoading(true);
+    try {
+      await deleteAssetLiability(id);
       await refresh();
     } catch (e: any) {
       setError(e.message || String(e));
@@ -135,6 +199,112 @@ export function NetWorthView() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Assets & Liabilities Management */}
+      <Card className="rounded-sm">
+        <CardHeader>
+          <CardTitle>Assets & Liabilities</CardTitle>
+          <p className="text-sm text-muted-foreground">Manage your assets and liabilities</p>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Add Asset */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-medium">Add Asset</h4>
+            <div className="grid grid-cols-3 gap-2 items-center">
+              <Input 
+                placeholder="Asset name" 
+                value={newAssetName} 
+                onChange={(e) => setNewAssetName(e.target.value)} 
+              />
+              <Input 
+                type="number" 
+                step="0.01" 
+                placeholder="Amount" 
+                value={newAssetAmount} 
+                onChange={(e) => setNewAssetAmount(e.target.value)} 
+              />
+              <Input 
+                placeholder="Category" 
+                value={newAssetCategory} 
+                onChange={(e) => setNewAssetCategory(e.target.value)} 
+              />
+            </div>
+            <Button 
+              onClick={onAddAsset} 
+              disabled={loading || !newAssetName || !newAssetAmount}
+              size="sm"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Asset
+            </Button>
+          </div>
+
+          {/* Add Liability */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-medium">Add Liability</h4>
+            <div className="grid grid-cols-3 gap-2 items-center">
+              <Input 
+                placeholder="Liability name" 
+                value={newLiabilityName} 
+                onChange={(e) => setNewLiabilityName(e.target.value)} 
+              />
+              <Input 
+                type="number" 
+                step="0.01" 
+                placeholder="Amount" 
+                value={newLiabilityAmount} 
+                onChange={(e) => setNewLiabilityAmount(e.target.value)} 
+              />
+              <Input 
+                placeholder="Category" 
+                value={newLiabilityCategory} 
+                onChange={(e) => setNewLiabilityCategory(e.target.value)} 
+              />
+            </div>
+            <Button 
+              onClick={onAddLiability} 
+              disabled={loading || !newLiabilityName || !newLiabilityAmount}
+              size="sm"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Liability
+            </Button>
+          </div>
+
+          {/* Assets & Liabilities List */}
+          <div className="border-t border-border pt-4 space-y-2">
+            {assetsLiabilities.map((item) => (
+              <div key={item.id} className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">{item.name}</span>
+                  <span className={`text-xs px-2 py-1 rounded ${item.type === 'asset' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    {item.type}
+                  </span>
+                  <span className="text-sm text-muted-foreground">
+                    {formatCurrency(item.amount)}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    ({item.category})
+                  </span>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="rounded-sm" 
+                  onClick={() => onDeleteAssetLiability(item.id)}
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Delete
+                </Button>
+              </div>
+            ))}
+            {!assetsLiabilities.length && (
+              <div className="text-sm text-muted-foreground">No assets or liabilities yet. Add some above.</div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Net Worth History Chart */}
       <Card className="rounded-sm">
         <CardHeader>
